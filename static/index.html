@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Proxy Site</title>
+    <style>
+        #error-message {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="error-message"></div>
+    <form>
+        <input id="uv-address" type="text" placeholder="Enter URL">
+    </form>
+    
+    <script src="/uv/uv.bundle.js"></script>
+    <script src="/uv/uv.config.js"></script>
+    <script>
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  window.navigator.serviceWorker.register("/sw.js", {
+    scope: '/service/',
+  }).then(() => {
+    let url = input.value.trim();
+    if (!isUrl(url)) url = "https://www.google.com/search?q=" + url;
+    else if (!(url.startsWith("https://") || url.startsWith("http://"))) url = "http://" + url;
+    localStorage.setItem("encodedUrl", __uv$config.encodeUrl(url));
+    location.href = "/service/" + __uv$config.encodeUrl(url);
+  });
+});
+
+function isUrl(val = "") {
+  if (/^http(s?):\/\//.test(val) || (val.includes(".") && val.substr(0, 1) !== " ")) return true;
+  return false;
+}
+    </script>
+    <script>
+        // Test bare server connection
+        fetch('/bare/').then(r => r.json()).then(data => {
+            console.log('Bare server response:', data);
+        }).catch(err => {
+            console.error('Bare server error:', err);
+        });
+    </script>
+</body>
+</html>

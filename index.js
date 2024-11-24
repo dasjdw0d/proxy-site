@@ -1,73 +1,42 @@
-const express = require('express');
-const { createBareServer } = require('@tomphttp/bare-server-node');
-const http = require('http');
-const path = require('path');
+import express from 'express';
+import http from 'node:http';
+import path from 'node:path';
+import { createBareServer } from "@tomphttp/bare-server-node";
 
-// Add debugging
-const DEBUG = true;
-function debug(...args) {
-    if (DEBUG) console.log('[Debug]', ...args);
-}
+const __dirname = process.cwd();
+const server = http.createServer();
+const app = express(server);
+const bareServer = createBareServer("/bare/");
 
-const app = express();
-const port = process.env.PORT || 8000;
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
-// Initialize server with app
-const server = http.createServer(app);
+app.use(express.static(path.join(__dirname, "static")));
 
-// Create bare server
-const bareServer = createBareServer('/bare/', {
-    logErrors: true
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public'), {
-    extensions: ['html', 'css', 'js', 'json'],
-    index: 'index.html'
-}));
-
-// Add request logging middleware
-app.use((req, res, next) => {
-    debug(`${req.method} ${req.url}`);
-    next();
-});
-
-// Handle requests
-server.on('request', (req, res) => {
+server.on("request", (req, res) => {
     if (bareServer.shouldRoute(req)) {
-        debug('Bare server handling request:', req.url);
-        bareServer.routeRequest(req, res);
+      bareServer.routeRequest(req, res);
     } else {
-        debug('Express handling request:', req.url);
-        app(req, res);
+      app(req, res);
     }
-});
-
-// Handle upgrades
-server.on('upgrade', (req, socket, head) => {
+  });
+  
+  server.on("upgrade", (req, socket, head) => {
     if (bareServer.shouldRoute(req)) {
-        debug('Bare server handling upgrade:', req.url);
-        bareServer.routeUpgrade(req, socket, head);
+      bareServer.routeUpgrade(req, socket, head);
     } else {
-        debug('Closing socket upgrade:', req.url);
-        socket.end();
+      socket.end();
     }
-});
-
-// Error handling
-bareServer.on('error', (err) => {
-    console.error('Bare server error:', err);
-});
-
-// Start server
-server.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    debug('Debug mode enabled');
-});
-
-// Handle process termination
-process.on('SIGINT', () => {
-    debug('Shutting down...');
-    server.close();
-    process.exit();
-});
+  });
+  
+  server.on("listening", () => {
+    console.log(`Started`);
+  });
+  
+  server.listen({
+    port: 3001,
+  });
