@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Proxy Site</title>
+    <style>
+        #error-message {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="error-message"></div>
+    <form id="uv-form">
+        <input id="uv-search-engine" value="https://google.com" type="hidden"/>
+        <input id="uv-address" type="text" placeholder="Enter URL">
+        <button type="submit">Go</button>
+    </form>
+    
+    <script src="uv/uv.bundle.js"></script>
+    <script src="uv/uv.config.js"></script>
+    <script>
+        const form = document.getElementById('uv-form');
+        const input = document.getElementById('uv-address');
+        const errorDiv = document.getElementById('error-message');
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            console.error(message);
+        }
+
+        // Check if service workers are supported
+        if (!('serviceWorker' in navigator)) {
+            showError('Your browser does not support service workers.');
+        }
+
+        // Register service worker on page load
+        window.addEventListener('load', async () => {
+            try {
+                const registration = await registerSW();
+                console.log('Service Worker registered successfully:', registration);
+            } catch (err) {
+                showError('Failed to register service worker: ' + err.message);
+            }
+        });
+
+        async function registerSW() {
+            try {
+                // Unregister any existing service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+
+                // Register new service worker
+                return await navigator.serviceWorker.register('./sw.js', {
+                    scope: __uv$config.prefix,
+                    updateViaCache: 'none'
+                });
+            } catch (err) {
+                throw new Error('Failed to register service worker: ' + err.message);
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorDiv.style.display = 'none';
+
+            try {
+                let url = input.value.trim();
+                if (!url) throw new Error('Please enter a URL');
+
+                if (!isUrl(url)) {
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+                } else if (!(url.startsWith('https://') || url.startsWith('http://'))) {
+                    url = 'http://' + url;
+                }
+
+                const encodedUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
+                console.log('Navigating to:', encodedUrl);
+                window.location.href = encodedUrl;
+            } catch (err) {
+                showError('Error: ' + err.message);
+            }
+        });
+
+        function isUrl(val = '') {
+            try {
+                return /^http(s?):\/\//.test(val) || 
+                       (val.includes('.') && val.substr(0, 1) !== ' ');
+            } catch (err) {
+                return false;
+            }
+        }
+    </script>
+    <script>
+        // Test bare server connection
+        fetch('/bare/').then(r => r.json()).then(data => {
+            console.log('Bare server response:', data);
+        }).catch(err => {
+            console.error('Bare server error:', err);
+        });
+    </script>
+</body>
+</html>
