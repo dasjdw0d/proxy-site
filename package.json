@@ -1,18 +1,27 @@
 {
-  "name": "proxy_site",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type":"module",
+  "name": "surfdoge",
+  "version": "4.4.13",
+  "description": "",
+  "type": "module",
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@cypress/request": "^3.0.0",
+    "@mercuryworkshop/bare-mux": "^2.1.7",
+    "@mercuryworkshop/libcurl-transport": "1.3.10",
+    "@mercuryworkshop/epoxy-transport": "^2.1.26",
+    "@titaniumnetwork-dev/ultraviolet": "^3.2.7",
     "@tomphttp/bare-server-node": "2.0.3",
-    "express": "^4.21.1"
+    "chalk": "^5.3.0",
+    "express": "^4.18.2",
+    "wisp-server-node": "^1.1.3"
   }
 }
